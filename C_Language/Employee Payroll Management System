@@ -16,17 +16,12 @@ struct Employee {
     int overtime;
     float per_hour, net_salary;
 };
-
 char currentUser[20];
 
 // ----------- Utility Functions -----------
 
 void clearScreen() {
-#ifdef _WIN32
     system("cls");
-#else
-    system("clear");
-#endif
 }
 
 void pressEnter() {
@@ -227,18 +222,116 @@ void searchEmployee() {
     pressEnter();
 }
 
-void createNewPayroll() {
+void editEmployee() {
+    struct Employee e, t;
+    int id, found = 0;
     char file[40]; sprintf(file, "employees_%s.txt", currentUser);
-    int n;
+    FILE *fp = fopen(file, "r");
+    FILE *temp = fopen("temp.txt", "w");
+
     clearScreen();
     printTitle();
 
-    printf("This will overwrite existing payroll data.\n");
+    if (!fp) {
+        printf("No employee data available!");
+        fclose(temp);
+        pressEnter();
+        return;
+    }
+
+    printf("Enter Employee ID to edit: ");
+    scanf("%d", &id);
+
+    while (fscanf(fp, "%d %s %s %f %f %f %d %f %f",
+           &e.id, e.name, e.designation,
+           &e.salary, &e.bonus, &e.deduction,
+           &e.overtime, &e.per_hour, &e.net_salary) != EOF) {
+
+        if (e.id == id) {
+            found = 1;
+            printf("\nEditing Employee: %s\n", e.name);
+            printf("Name: "); scanf("%s", e.name);
+            printf("Designation: "); scanf("%s", e.designation);
+            printf("Salary: "); scanf("%f", &e.salary);
+            printf("Bonus: "); scanf("%f", &e.bonus);
+            printf("Deduction: "); scanf("%f", &e.deduction);
+            printf("Overtime Hrs: "); scanf("%d", &e.overtime);
+            printf("Per Hr Pay: "); scanf("%f", &e.per_hour);
+
+            e.net_salary = e.salary + e.bonus + (e.overtime*e.per_hour) - e.deduction;
+        }
+        fprintf(temp, "%d %s %s %.2f %.2f %.2f %d %.2f %.2f\n",
+                e.id, e.name, e.designation,
+                e.salary, e.bonus, e.deduction,
+                e.overtime, e.per_hour, e.net_salary);
+    }
+
+    fclose(fp); fclose(temp);
+    remove(file); rename("temp.txt", file);
+
+    if (found) printf("\nEmployee updated successfully!");
+    else printf("\nEmployee not found!");
+    pressEnter();
+}
+
+void deleteEmployee() {
+    struct Employee e;
+    int id, found = 0;
+    char file[40]; sprintf(file, "employees_%s.txt", currentUser);
+    FILE *fp = fopen(file, "r");
+    FILE *temp = fopen("temp.txt", "w");
+
+    clearScreen();
+    printTitle();
+
+    if (!fp) {
+        printf("No employee data available!");
+        fclose(temp);
+        pressEnter();
+        return;
+    }
+
+    printf("Enter Employee ID to delete: ");
+    scanf("%d", &id);
+
+    while (fscanf(fp, "%d %s %s %f %f %f %d %f %f",
+           &e.id, e.name, e.designation,
+           &e.salary, &e.bonus, &e.deduction,
+           &e.overtime, &e.per_hour, &e.net_salary) != EOF) {
+
+        if (e.id == id) {
+            found = 1;
+            continue; // skip writing to delete
+        }
+        fprintf(temp, "%d %s %s %.2f %.2f %.2f %d %.2f %.2f\n",
+                e.id, e.name, e.designation,
+                e.salary, e.bonus, e.deduction,
+                e.overtime, e.per_hour, e.net_salary);
+    }
+
+    fclose(fp); fclose(temp);
+    remove(file); rename("temp.txt", file);
+
+    if (found) printf("\nEmployee deleted successfully!");
+    else printf("\nEmployee not found!");
+    pressEnter();
+}
+
+void createNewPayroll() {
+    char file[40]; sprintf(file, "employees_%s.txt", currentUser);
+    char choice;
+    clearScreen();
+    printTitle();
+
+    printf("WARNING: This will overwrite existing payroll data. Continue? (y/n): ");
+    scanf(" %c", &choice);
+    if (choice != 'y' && choice != 'Y') return;
+
+    int n;
     printf("Enter number of employees: ");
     scanf("%d", &n);
 
-    FILE *fp = fopen(file, "w");
-
+    FILE *fp = fopen(file, "w"); // overwrite file
     struct Employee e;
     for (int i = 0; i < n; i++) {
         printf("\nEmployee %d\n", i+1);
@@ -258,13 +351,12 @@ void createNewPayroll() {
                 e.salary, e.bonus, e.deduction,
                 e.overtime, e.per_hour, e.net_salary);
     }
-
     fclose(fp);
     printf("\nPayroll created successfully!");
     pressEnter();
 }
 
-// ----------- Profile Functions -----------
+// ----------- Profile -----------
 
 void profileMenu() {
     struct Admin a, t;
@@ -285,7 +377,8 @@ void profileMenu() {
         printf("1. View Profile\n");
         printf("2. Edit Profile\n");
         printf("3. Delete Account\n");
-        printf("4. Back\n");
+        printf("4. Logout\n");
+        printf("5. Back\n");
         printf("Choose: ");
         scanf("%d", &ch);
 
@@ -348,7 +441,12 @@ void profileMenu() {
                 exit(0);
             }
         }
-        else return;
+        else if (ch == 4) { // Logout
+            printf("\nLogging out...\n");
+            pressEnter();
+            return;
+        }
+        else if (ch == 5) return;
     }
 }
 
@@ -369,20 +467,22 @@ void payrollMenu() {
         printf("1. Show Employees\n");
         printf("2. Add Employee\n");
         printf("3. Search Employee\n");
-        printf("4. Create New Payroll\n");
-        printf("5. Profile\n");
-        printf("6. Logout\n");
-        printf("7. Close Software\n");
+        printf("4. Edit Employee\n");
+        printf("5. Delete Employee\n");
+        printf("6. Create New Payroll\n");
+        printf("7. Profile\n");
+        printf("8. Close Software\n");
         printf("Choose: ");
         scanf("%d", &ch);
 
         if (ch == 1) showEmployees();
         else if (ch == 2) addEmployee();
         else if (ch == 3) searchEmployee();
-        else if (ch == 4) createNewPayroll();
-        else if (ch == 5) profileMenu();
-        else if (ch == 6) return;
-        else if (ch == 7) closeSoftware();
+        else if (ch == 4) editEmployee();
+        else if (ch == 5) deleteEmployee();
+        else if (ch == 6) createNewPayroll();
+        else if (ch == 7) profileMenu();
+        else if (ch == 8) closeSoftware();
     }
 }
 
