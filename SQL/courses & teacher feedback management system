@@ -1,0 +1,259 @@
+-- STUDENT TABLE
+CREATE TABLE student (
+    st_id NUMBER PRIMARY KEY,
+    name VARCHAR2(50)
+);
+
+-- TEACHER TABLE
+CREATE TABLE teacher (
+    teacher_id NUMBER PRIMARY KEY,
+    name VARCHAR2(50)
+);
+
+-- COURSE TABLE
+CREATE TABLE course (
+    course_id NUMBER PRIMARY KEY,
+    course_name VARCHAR2(50)
+);
+
+-- ASSIGNED TEACHER TABLE
+CREATE TABLE assigned_teacher (
+    course_id NUMBER,
+    teacher_id NUMBER,
+    PRIMARY KEY (course_id, teacher_id),
+    FOREIGN KEY (course_id) REFERENCES course(course_id),
+    FOREIGN KEY (teacher_id) REFERENCES teacher(teacher_id)
+);
+
+-- FEEDBACK TABLE
+CREATE TABLE course_feedback (
+    st_id NUMBER,
+    course_id NUMBER,
+    course_rating NUMBER(1),
+    teacher_id NUMBER,
+    teacher_rating NUMBER(1),
+    PRIMARY KEY (st_id, course_id, teacher_id),
+    FOREIGN KEY (st_id) REFERENCES student(st_id),
+    FOREIGN KEY (course_id) REFERENCES course(course_id),
+    FOREIGN KEY (teacher_id) REFERENCES teacher(teacher_id),
+    CHECK (course_rating BETWEEN 1 AND 5),
+    CHECK (teacher_rating BETWEEN 1 AND 5)
+);
+
+------------------------------------------------
+-- STUDENTS
+INSERT INTO student VALUES (1,'Arafat');
+INSERT INTO student VALUES (2,'Rahim');
+INSERT INTO student VALUES (3,'Karim');
+
+-- COURSES
+INSERT INTO course VALUES (101,'CSE');
+INSERT INTO course VALUES (102,'EEE');
+INSERT INTO course VALUES (103,'ME');
+INSERT INTO course VALUES (104,'Civil');
+
+-- TEACHERS (3 per course = 12 teachers)
+INSERT INTO teacher VALUES (1,'Hasan');
+INSERT INTO teacher VALUES (2,'Rima');
+INSERT INTO teacher VALUES (3,'Jamil');
+
+INSERT INTO teacher VALUES (4,'Sohel');
+INSERT INTO teacher VALUES (5,'Nila');
+INSERT INTO teacher VALUES (6,'Tarek');
+
+INSERT INTO teacher VALUES (7,'Imran');
+INSERT INTO teacher VALUES (8,'Sadia');
+INSERT INTO teacher VALUES (9,'Noman');
+
+INSERT INTO teacher VALUES (10,'Kabir');
+INSERT INTO teacher VALUES (11,'Mitu');
+INSERT INTO teacher VALUES (12,'Rakib');
+
+-- ASSIGN TEACHERS
+
+-- CSE
+INSERT INTO assigned_teacher VALUES (101,1);
+INSERT INTO assigned_teacher VALUES (101,2);
+INSERT INTO assigned_teacher VALUES (101,3);
+
+-- EEE
+INSERT INTO assigned_teacher VALUES (102,4);
+INSERT INTO assigned_teacher VALUES (102,5);
+INSERT INTO assigned_teacher VALUES (102,6);
+
+-- ME
+INSERT INTO assigned_teacher VALUES (103,7);
+INSERT INTO assigned_teacher VALUES (103,8);
+INSERT INTO assigned_teacher VALUES (103,9);
+
+-- CIVIL
+INSERT INTO assigned_teacher VALUES (104,10);
+INSERT INTO assigned_teacher VALUES (104,11);
+INSERT INTO assigned_teacher VALUES (104,12);
+
+-- FEEDBACK
+-- STUDENT 1
+
+INSERT INTO course_feedback VALUES (1,101,5,1,4);
+INSERT INTO course_feedback VALUES (1,101,5,2,5);
+INSERT INTO course_feedback VALUES (1,101,5,3,4);
+
+INSERT INTO course_feedback VALUES (1,102,4,4,5);
+INSERT INTO course_feedback VALUES (1,102,4,5,4);
+INSERT INTO course_feedback VALUES (1,102,4,6,5);
+
+INSERT INTO course_feedback VALUES (1,103,5,7,5);
+INSERT INTO course_feedback VALUES (1,103,5,8,4);
+INSERT INTO course_feedback VALUES (1,103,5,9,5);
+
+INSERT INTO course_feedback VALUES (1,104,4,10,4);
+INSERT INTO course_feedback VALUES (1,104,4,11,5);
+INSERT INTO course_feedback VALUES (1,104,4,12,4);
+
+-- STUDENT 2
+
+INSERT INTO course_feedback VALUES (2,101,4,1,5);
+INSERT INTO course_feedback VALUES (2,101,4,2,4);
+INSERT INTO course_feedback VALUES (2,101,4,3,5);
+
+INSERT INTO course_feedback VALUES (2,102,5,4,5);
+INSERT INTO course_feedback VALUES (2,102,5,5,4);
+INSERT INTO course_feedback VALUES (2,102,5,6,5);
+
+INSERT INTO course_feedback VALUES (2,103,4,7,4);
+INSERT INTO course_feedback VALUES (2,103,4,8,5);
+INSERT INTO course_feedback VALUES (2,103,4,9,4);
+
+INSERT INTO course_feedback VALUES (2,104,5,10,5);
+INSERT INTO course_feedback VALUES (2,104,5,11,4);
+INSERT INTO course_feedback VALUES (2,104,5,12,5);
+
+-- STUDENT 3
+
+INSERT INTO course_feedback VALUES (3,101,5,1,5);
+INSERT INTO course_feedback VALUES (3,101,5,2,4);
+INSERT INTO course_feedback VALUES (3,101,5,3,5);
+
+INSERT INTO course_feedback VALUES (3,102,4,4,4);
+INSERT INTO course_feedback VALUES (3,102,4,5,5);
+INSERT INTO course_feedback VALUES (3,102,4,6,4);
+
+INSERT INTO course_feedback VALUES (3,103,5,7,5);
+INSERT INTO course_feedback VALUES (3,103,5,8,4);
+INSERT INTO course_feedback VALUES (3,103,5,9,5);
+
+INSERT INTO course_feedback VALUES (3,104,4,10,4);
+INSERT INTO course_feedback VALUES (3,104,4,11,5);
+INSERT INTO course_feedback VALUES (3,104,4,12,4);
+
+COMMIT;
+
+-- SHOW STUDENT TABLE
+SELECT * FROM student;
+
+-- COUNT NUMBER OF STUDENTS
+SELECT COUNT(*) AS total_students
+FROM student;
+
+-- SHOW COURSE TABLE
+SELECT * FROM course;
+
+-- COUNT NUMBER OF COURSES
+SELECT COUNT(*) AS total_courses
+FROM course;
+
+-- SHOW TEACHER TABLE WITH COURSE NAME
+SELECT teacher.teacher_id,
+       teacher.name,
+       course.course_name
+FROM teacher, assigned_teacher, course
+WHERE teacher.teacher_id = assigned_teacher.teacher_id
+AND assigned_teacher.course_id = course.course_id;
+
+-- COUNT NUMBER OF TEACHERS
+SELECT COUNT(*) AS total_teachers
+FROM teacher;
+
+
+------------------------------------------------------------
+-- 1. AVERAGE RATING OF EACH COURSE
+------------------------------------------------------------
+SELECT c.course_id,
+       c.course_name,
+       AVG(f.course_rating) AS avg_course_rating
+FROM course c
+JOIN course_feedback f ON c.course_id = f.course_id
+GROUP BY c.course_id, c.course_name;
+
+
+------------------------------------------------------------
+-- 2. BEST COURSE BY RATING
+------------------------------------------------------------
+SELECT *
+FROM (
+    SELECT c.course_id,
+           c.course_name,
+           AVG(f.course_rating) AS avg_course_rating
+    FROM course c
+    JOIN course_feedback f ON c.course_id = f.course_id
+    GROUP BY c.course_id, c.course_name
+    ORDER BY avg_course_rating DESC
+)
+WHERE ROWNUM = 1;
+
+
+------------------------------------------------------------
+-- 3. LOWEST COURSE BY RATING
+------------------------------------------------------------
+SELECT *
+FROM (
+    SELECT c.course_id,
+           c.course_name,
+           AVG(f.course_rating) AS avg_course_rating
+    FROM course c
+    JOIN course_feedback f ON c.course_id = f.course_id
+    GROUP BY c.course_id, c.course_name
+    ORDER BY avg_course_rating ASC
+)
+WHERE ROWNUM = 1;
+
+
+------------------------------------------------------------
+-- 4. BEST TEACHER IN EACH COURSE
+------------------------------------------------------------
+SELECT *
+FROM (
+    SELECT c.course_id,
+           c.course_name,
+           t.teacher_id,
+           t.name AS teacher_name,
+           AVG(f.teacher_rating) AS avg_teacher_rating,
+           ROW_NUMBER() OVER (
+               PARTITION BY c.course_id 
+               ORDER BY AVG(f.teacher_rating) DESC
+           ) rn
+    FROM course_feedback f
+    JOIN course c ON f.course_id = c.course_id
+    JOIN teacher t ON f.teacher_id = t.teacher_id
+    GROUP BY c.course_id, c.course_name, t.teacher_id, t.name
+)
+WHERE rn = 1;
+
+
+------------------------------------------------------------
+-- 5. OVERALL BEST TEACHER (ALL COURSES COMBINED)
+------------------------------------------------------------
+SELECT *
+FROM (
+    SELECT t.teacher_id,
+           t.name AS teacher_name,
+           c.course_name,
+           AVG(f.teacher_rating) AS avg_teacher_rating
+    FROM course_feedback f
+    JOIN teacher t ON f.teacher_id = t.teacher_id
+    JOIN course c ON f.course_id = c.course_id
+    GROUP BY t.teacher_id, t.name, c.course_name
+    ORDER BY avg_teacher_rating DESC
+)
+WHERE ROWNUM = 1;
+
